@@ -13,6 +13,16 @@ services:
     networks:
       - micro_network
 
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: rabbitmq_broker
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - micro_network
+
+# Flask User service
   users-service:
     build: ./users-service
     container_name: flask_users_service
@@ -22,9 +32,11 @@ services:
       - DATABASE_URL=${USERS_DB_URL}
     depends_on:
       - db
+      - rabbitmq
     networks:
       - micro_network
 
+# FastAPI Products service
   products-service:
     build: ./products-service
     container_name: fastapi_products_service
@@ -34,6 +46,7 @@ services:
       - DATABASE_URL=${PRODUCTS_DB_URL}
     depends_on:
       - db
+      - rabbitmq
     networks:
       - micro_network
 
