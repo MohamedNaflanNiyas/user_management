@@ -30,6 +30,7 @@ def create_user():
         "username": new_user.username
     }), 201
 
+# Get all users
 @users_bp.route('/users', methods=['GET'])
 def get_users():
     users = User.query.all()
@@ -38,3 +39,26 @@ def get_users():
         for u in users
     ])
 
+# Get user by id
+@users_bp.route('/users/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    return jsonify({
+        "id": user.id,
+        "username": user.username
+    }), 200
+
+# Update user
+@users_bp.route('/users/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    data = request.get_json()
+    if 'username' in data:
+        user.username = data['username']
+
+    db.session.commit

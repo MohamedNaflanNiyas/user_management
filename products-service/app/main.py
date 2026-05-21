@@ -6,9 +6,15 @@ from sqlalchemy.future import select
 from pydantic import BaseModel
 from .config import DATABASE_URL
 import asyncio
+import os
 from sqlalchemy.exc import OperationalError
 
 app = FastAPI(title="Products Service")
+
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://postgres:password@postgres_db:5432/products_db"
+)
 
 # set up DB Engine
 engine = create_async_engine(DATABASE_URL, echo=True)
@@ -25,10 +31,15 @@ class ProductDB(Base):
 
 class ProductCreate(BaseModel):
     name: str
+    price: float
+    stock: int
+
 
 class ProductResponse(BaseModel):
     id: int
     name: str
+    price:float
+    stock:int
     class Config:
         from_attributes = True
 
@@ -58,7 +69,11 @@ async def startup():
 # Add new products
 @app.post("/products", response_model=ProductResponse, status_code=201)
 async def create_product(product: ProductCreate, db: AsyncSession=Depends(get_db)):
-    new_product = ProductDB(name= product.name)
+    new_product = ProductDB(
+        name= product.name,
+        price=product.price,
+        stock=product.stock
+        )
     db.add(new_product)
     await db.commit()
     await db.refresh(new_product)
@@ -79,11 +94,11 @@ async def get_product(product_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Product not found")
     return product
 
-
+# 
 @app.put("/products/{product_id}/stock", status_code=200)
 async def deduct_stock(product_id: int, quantity: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(ProductDB).where(ProductDB.id == product_id))
-    product = result.scalar().first()
+    product = result.scalars().first()
 
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")

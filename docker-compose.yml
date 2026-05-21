@@ -50,6 +50,21 @@ services:
     networks:
       - micro_network
 
+  orders-service:
+    build: ./orders-service
+    container_name: fastapi_orders_service
+    ports:
+      - "5003:5003"
+    environment:
+      - USER_SERVICE_URL=http://flask_users_service:5001
+    depends_on:
+      - db
+      - rabbitmq
+      - users-service
+      - products-service
+    networks:
+      - micro_network
+
 volumes:
   postgres_data:
 

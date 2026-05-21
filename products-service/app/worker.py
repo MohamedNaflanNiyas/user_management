@@ -24,7 +24,7 @@ def deduct_inventory(product_id: int, quantity:int):
         # Atomically deduct stock only if sufficient stock exists
         query = """
             UPDATE products
-            SET stock = stock -%s
+            SET stock = stock - %s
             WHERE id = %s AND stock >= %s;
         """
 
@@ -47,7 +47,7 @@ def deduct_inventory(product_id: int, quantity:int):
 def callback(ch, method, properties, body):
     try:
         payload = json.loads(body.decode())
-        print("f - Consumer pulled order event: {payload}")
+        print(f"- Consumer pulled order event: {payload}")
 
         # process dB operation
         deduct_inventory(product_id = payload['product_id'], quantity=payload['quantity'])
@@ -67,11 +67,11 @@ def start_worker():
         channel = connection.channel()
 
         # keep consistent declaration configurations
-        channel.queue_declare(queue='order_inventory_quue', durable=True)
+        channel.queue_declare(queue='order_inventory_queue', durable=True)
 
         # only deliver 1 unackowledged message to this consumer container at a time
         channel.basic_qos(prefetch_count=1)
-        channel.basic_consume(queue='order_inventory_quue', on_message_callback=callback)
+        channel.basic_consume(queue='order_inventory_queue', on_message_callback=callback)
 
         print(" consumer setup completed... Listing to inventory messages")
         channel.start_consuming()
