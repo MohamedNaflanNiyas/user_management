@@ -1,30 +1,27 @@
-microservice-project/
-│
-├── users-service/          # Flask Microservice
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── config.py
-│   │   └── routes.py
-│   ├── Dockerfile
-│   └── requirements.txt
-│
-├── products-service/       # FastAPI Microservice
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── config.py
-│   │   └── main.py
-│   ├── Dockerfile
-│   └── requirements.txt
-│
-├── .env                    # Local credentials (git-ignored)
-└── docker-compose.yml      # Orchestrates all containers
+
 
 
 
 DOCKER
 
 docker-compose down
-docker-compose build --no-cache products-service 
+docker-compose build --no-cache 
 docker-compose up --build
 
 
+END POINT LINKS:
+
+1. users-service : Flask
+==> To create new users : http://localhost:5001/users
+==> To get all users : http://localhost:5001/users
+==> To get user by ID : http://localhost:5001/users/1
+
+2. products-service : FastAPI
+==> To create new products : http://localhost:5002/products
+==> To get all products : http://localhost:5002/products
+==> To get product by ID : http://localhost:5002/products/1
+
+3. orders-service : FastAPI
+==> To create new orders : http://localhost:5003/orders
+==> To get all orders : http://localhost:5003/orders
+==> To get order by ID : http://localhost:5003/orders/1
