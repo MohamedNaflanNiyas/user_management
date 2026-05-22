@@ -16,10 +16,15 @@ class User(db.Model):
 @users_bp.route('/users', methods=['POST'])
 def create_user():
     data = request.get_json()
+    username = data.get('username')
 
     if not data or 'username' not in data:
         return jsonify({"error": "Missing username"}), 400
 
+    # Check if the username is already taken
+    existing_user = db.session.query(User).filter_by(username=username).first()
+    if existing_user:
+        return jsonify({"error": f"Username '{username}' is already taken"}), 400
     new_user = User(username=data['username'])
 
     db.session.add(new_user)

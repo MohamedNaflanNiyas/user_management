@@ -7,11 +7,14 @@ import time
 import os
 import psycopg2
 
-# Fallback to standard local address strings if envirinment variable are missing
-DB_URL = os.getenv(
+# 1. Grab the URL from the environment string
+RAW_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://postgres:password@postgres_db:5432/products_db"
+    "postgresql+asyncpg://postgres:password@db:5432/products_db"
 )
+
+#Strip out the "+asyncpg" protocol token so psycopg2 can parse it cleanly
+DB_URL = RAW_URL.replace("+asyncpg", "")
 
 def deduct_inventory(product_id: int, quantity:int):
     # executes atomic SQL commands to decrement product stock levels
@@ -63,7 +66,7 @@ def start_worker():
     time.sleep(10)
 
     try: 
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq_broker'))
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
         channel = connection.channel()
 
         # keep consistent declaration configurations

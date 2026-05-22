@@ -18,3 +18,13 @@ microservice-project/
 │
 ├── .env                    # Local credentials (git-ignored)
 └── docker-compose.yml      # Orchestrates all containers
+
+
+
+DOCKER
+
+docker-compose down
+docker-compose build --no-cache products-service 
+docker-compose up --build
+
+
