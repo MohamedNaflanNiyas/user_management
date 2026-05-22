@@ -14,6 +14,10 @@ USER_SERVICE_URL = os.getenv(
     "USER_SERVICE_URL",
     "http://flask_users_service:5001"
 )
+PRODUCTS_SERVICE_URL = os.getenv(
+    "PRODUCTS_SERVICE_URL",
+    "http://fastapi_products_service:5002"
+)
 
 # Request validtaion schemas
 class OrderCreate(BaseModel):
@@ -42,6 +46,10 @@ async def health_check():
 """
 @app.post("/orders", status_code=status.HTTP_201_CREATED)
 async def create_order(order:OrderCreate):
+    username = "UnKnown"
+    product_name= "Unknown"
+
+
     #1. Validate user existence
     async with httpx.AsyncClient() as client:
         try:
@@ -58,11 +66,40 @@ async def create_order(order:OrderCreate):
                     status_code=status.HTTP_502_BAD_GATEWAY,
                     detail = "Failed to communicate realiably with User verification service"
                 )
+            
+            # Extract username from the response body
+            user_data = user_response.json()
+            username = user_data.get("username", "Unknown User")
         
         except httpx.RequestError as exc:
             raise HTTPException(
                 status_code = status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=f"User verification service is temporarrily unreachable: {exc}"
+            )
+        
+    # 2. Validate product exixtance
+        try:
+            # Pointing to your product retrieval endpoint 
+            product_response = await client.get(f"{PRODUCTS_SERVICE_URL}/products/{order.product_id}", timeout=3)
+
+            if product_response.status_code == 404:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Order rejected: Product ID {order.product_id} does not exist"
+                )
+            elif product_response.status_code !=200:
+                raise HTTPException(
+                    status_code = status.HTTP_502_BAD_GATEWAY,
+                    detail="Failed to communicate reliably with Product verification service"
+                )
+            # extract product name from the response body
+            product_data = product_response.json()
+            product_name = product_data.get("name", "Unknown Product")
+
+        except httpx.RequestError as exc:
+            raise HTTPException(
+                status_code = status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Product verification service is temporarily unreachable: {exc}"
             )
                 
     # 2. Trigger Asynchoronous inventory Allocation
@@ -72,7 +109,7 @@ async def create_order(order:OrderCreate):
         # If the broker is atructurally unreachable throw a 500 so client know the transaction failed
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Örder accepted but critical background worker event broadcast faild: {mq_err}" 
+            detail=f"Order accepted but critical background worker event broadcast faild: {mq_err}" 
         )
 
     # 3. Respond back to client
@@ -80,7 +117,9 @@ async def create_order(order:OrderCreate):
         "message":"Order processing initiated succesfully",
         "order_details":{
             "user_id": order.user_id,
+            "username": username,
             "product_id": order.product_id,
+            "product_name": product_name,
             "quantity": order.quantity
         },
         "delivery_pipeline": "asynchronous_broker_queue"
