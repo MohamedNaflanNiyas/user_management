@@ -95,6 +95,14 @@ async def create_order(order:OrderCreate):
             # extract product name from the response body
             product_data = product_response.json()
             product_name = product_data.get("name", "Unknown Product")
+            available_stock = product_data.get("stock",0)
+
+            # Reject order if stock < quantity request by user
+            if available_stock < order.quantity:
+                raise HTTPException(
+                    status_code = status.HTTP_400_BAD_REQUEST,
+                    detail = f"Order Rejected: Insufficient stock. Requested {order.quantity}, but only {available_stock} available. "
+                )
 
         except httpx.RequestError as exc:
             raise HTTPException(

@@ -26,5 +26,5 @@ def publish_order_placed(product_id: int, quantity: int):
         )
     )
 
-    print(f" [x] Producer succesfully sent order event: {message}")
+    print(f"Product succesfully sent order event: {message}")
     connection.close()

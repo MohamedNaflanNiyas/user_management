@@ -11,28 +11,35 @@ class User(db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(120), nullable=False)
+
+
 
 # Create new user
 @users_bp.route('/users', methods=['POST'])
 def create_user():
     data = request.get_json()
     username = data.get('username')
+    password = data.get('password')
 
     if not data or 'username' not in data:
         return jsonify({"error": "Missing username"}), 400
+    if 'password' not in data:
+        return jsonify({"error": "Missing password"}), 400
 
     # Check if the username is already taken
     existing_user = db.session.query(User).filter_by(username=username).first()
     if existing_user:
         return jsonify({"error": f"Username '{username}' is already taken"}), 400
-    new_user = User(username=data['username'])
+    new_user = User(username=username, password=password)
 
     db.session.add(new_user)
     db.session.commit()
 
     return jsonify({
         "id": new_user.id,
-        "username": new_user.username
+        "username": new_user.username,
+        "password": new_user.password
     }), 201
 
 # Get all users
