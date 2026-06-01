@@ -35,3 +35,7 @@
 
 #### 3. orders-service : FastAPI
 ==> To create new orders : http://localhost:5003/orders
+==> To get all orders : http://localhost:5003/orders
+==> To get order by ID : http://localhost:5003/orders/1
+==> To Update order by ID : http://localhost:5003/orders/1
+==> To Delete order by ID : http://localhost:5003/orders/1
